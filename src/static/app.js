@@ -3,6 +3,33 @@ document.addEventListener("DOMContentLoaded", () => {
   const activitySelect = document.getElementById("activity");
   const signupForm = document.getElementById("signup-form");
   const messageDiv = document.getElementById("message");
+  const participantsList = document.getElementById("participants-list");
+
+  // Function to fetch participants for a specific activity
+  async function fetchParticipants(activityName) {
+    try {
+      const response = await fetch(`/activities/${encodeURIComponent(activityName)}/participants`);
+      const participants = await response.json();
+
+      // Clear existing participants
+      participantsList.innerHTML = "";
+
+      if (participants.length > 0) {
+        const ul = document.createElement("ul");
+        participants.forEach((participant) => {
+          const li = document.createElement("li");
+          li.textContent = participant;
+          ul.appendChild(li);
+        });
+        participantsList.appendChild(ul);
+      } else {
+        participantsList.innerHTML = "<p>No participants yet.</p>";
+      }
+    } catch (error) {
+      participantsList.innerHTML = "<p>Failed to load participants. Please try again later.</p>";
+      console.error("Error fetching participants:", error);
+    }
+  }
 
   // Function to fetch activities from API
   async function fetchActivities() {
@@ -25,10 +52,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <p>${details.description}</p>
           <p><strong>Schedule:</strong> ${details.schedule}</p>
           <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
-          <p><strong>Participants:</strong></p>
-          <ul>
-            ${details.participants.map(participant => `<li>${participant}</li>`).join("")}
-          </ul>
+          <button class="view-participants" data-activity="${name}">View Participants</button>
         `;
 
         activitiesList.appendChild(activityCard);
@@ -38,6 +62,14 @@ document.addEventListener("DOMContentLoaded", () => {
         option.value = name;
         option.textContent = name;
         activitySelect.appendChild(option);
+      });
+
+      // Add event listeners for "View Participants" buttons
+      document.querySelectorAll(".view-participants").forEach((button) => {
+        button.addEventListener("click", (event) => {
+          const activityName = event.target.getAttribute("data-activity");
+          fetchParticipants(activityName);
+        });
       });
     } catch (error) {
       activitiesList.innerHTML = "<p>Failed to load activities. Please try again later.</p>";
